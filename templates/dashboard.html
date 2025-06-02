@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <!-- Upload CSV -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Upload CSV File</h5>
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_csv') }}">
+                <div class="input-group">
+                    <input type="file" class="form-control" name="csv_file" accept=".csv" required>
+                    <button class="btn btn-success" type="submit">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- <div class="mb-3">
+    <form method="GET" action="{{ url_for('dashboard') }}">
+        <button type="submit" class="btn btn-warning">Run Prediction</button>
+    </form>
+    </div> -->
+
+    <!-- Correlation Heatmap -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Correlation Matrix (Heatmap)</h5>
+            <form method="POST" id="correlation-form">
+                <div class="form-group mb-2">
+                    {% for col in data.correlation.keys() %}
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input correlation-toggle" type="checkbox"
+                               name="selected_cols" value="{{ col }}" id="col_{{ col }}"
+                               {% if selected_correlation and col in selected_correlation %}checked{% endif %}>
+                        <label class="form-check-label" for="col_{{ col }}">{{ col }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <!-- <button type="submit" class="btn btn-primary btn-sm">Show Correlation</button> -->
+            </form>
+
+            {% if selected_correlation %}
+            <div class="mt-3">
+                <canvas id="correlationHeatmap" style="max-width: 100%; height: auto;"></canvas>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Number of Rows & Completeness -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Number of Rows</h5>
+                    <p class="card-text">{{ data.num_rows }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Completeness</h5>
+                    <canvas id="completenessChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consistency -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Consistency</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Consistency (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for col, value in data.consistency.items() %}
+                        <tr>
+                            <td>{{ col }}</td>
+                            <td>{{ (value * 100) | round(2) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Min / Max Values -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Min / Max Values</h5>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for col, val in data.min_max.items() %}
+                        <tr>
+                            <td>{{ col }}</td>
+                            <td>{{ val.min }}</td>
+                            <td>{{ val.max }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.1.0/dist/chartjs-chart-matrix.min.js"></script>
+
+<script>
+    // Completeness chart
+    const ctx = document.getElementById('completenessChart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ data.completeness.keys() | list | tojson }},
+            datasets: [{
+                label: 'Completeness (%)',
+                data: {{ data.completeness.values() | list | map('float') | map('round', 2) | list | tojson }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                        callback: value => (value * 100).toFixed(0) + '%'
+                    }
+                }
+            }
+        }
+    });
+
+    // Auto submit correlation form when checkbox changes
+    document.querySelectorAll('.correlation-toggle').forEach(el => {
+        el.addEventListener('change', () => {
+            document.getElementById('correlation-form').submit();
+        });
+    });
+
+    // Correlation Heatmap Chart.js
+    {% if selected_correlation %}
+    const labels = {{ selected_correlation | tojson }};
+    const rawData = {{ selected_correlation_data | tojson }};
+    const matrix = [];
+
+    labels.forEach((row, i) => {
+        labels.forEach((col, j) => {
+            const val = rawData[row][col];
+            matrix.push({ x: col, y: row, v: val });
+        });
+    });
+
+    const ctxHeat = document.getElementById('correlationHeatmap').getContext('2d');
+    new Chart(ctxHeat, {
+        type: 'matrix',
+        data: {
+            datasets: [{
+                label: 'Correlation',
+                data: matrix,
+                backgroundColor: ctx => {
+                    const val = ctx.raw.v;
+                    const alpha = Math.abs(val);
+                    const color = val >= 0 ? 'rgba(54, 162, 235, ' : 'rgba(255, 99, 132, ';
+                    return color + alpha.toFixed(2) + ')';
+                },
+                borderColor: 'rgba(255, 255, 255, 0.7)',
+                borderWidth: 1,
+                width: ({ chart }) => (chart.chartArea || {}).width / labels.length - 1,
+                height: ({ chart }) => (chart.chartArea || {}).height / labels.length - 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: items => `${items[0].raw.y} vs ${items[0].raw.x}`,
+                        label: item => `Correlation: ${item.raw.v.toFixed(2)}`
+                    }
+                },
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    type: 'category',
+                    labels: labels,
+                    title: { display: true, text: 'Feature X' },
+                    ticks: { maxRotation: 90, minRotation: 45 }
+                },
+                y: {
+                    type: 'category',
+                    labels: labels,
+                    title: { display: true, text: 'Feature Y' },
+                    reverse: true
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

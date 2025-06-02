@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="container mt-4">
+    <h2>Thông tin khóa học: {{ course }}</h2>  {# course là string rồi #}
+
+    <form method="get" class="mb-3">
+        <label for="filter">Lọc theo dự đoán:</label>
+        <select name="filter" id="filter" onchange="this.form.submit()">
+            <option value="">Tất cả</option>
+            <option value="0" {{ 'selected' if filter_val == '0' }}>0</option>
+            <option value="1" {{ 'selected' if filter_val == '1' }}>1</option>
+            <option value="2" {{ 'selected' if filter_val == '2' }}>2</option>
+        </select>
+    </form>
+
+    <h3>Phân bố dự đoán</h3>
+    <div style="display: flex; justify-content: center;">
+        <canvas id="predictionChart" style="max-width: 300px; max-height: 300px;"></canvas>
+    </div>
+
+    <h3>Danh sách người dùng đã đăng ký khóa học</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>UID</th>
+                <th>Họ tên</th>
+                <th>Dự đoán</th>
+                <!-- Bạn không có completion rate, nên bỏ cột này hoặc để trống -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><a href="/user/{{ user.uid }}">{{ user.uid }}</a></td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.predict if user.predict is not none else 'Chưa có' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+        const predictionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['0', '1', '2', 'Chưa có'],
+                datasets: [{
+                    label: 'Phân bố dự đoán',
+                    data: [
+                        {{ count_predict[0] }},
+                        {{ count_predict[1] }},
+                        {{ count_predict[2] }},
+                        {{ count_predict['none'] }}
+                    ],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',     // Xanh lá
+                        'rgba(255, 205, 86, 0.7)',      // Vàng
+                        'rgba(255, 99, 132, 0.7)',      // Đỏ
+                        'rgba(201, 203, 207, 0.7)'      // Xám
+                    ],
+                    borderColor: 'white',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+</div>
+{% endblock %}

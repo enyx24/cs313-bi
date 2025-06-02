@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Thống kê</h2>
+
+    <div class="row g-4">
+        <!-- Cột trái: 2 card stacked dọc -->
+        <div class="col-md-6 d-flex flex-column gap-4">
+            <!-- Card 1: Thống kê user -->
+            <div class="card shadow-sm border-0 flex-grow-1">
+                <div class="card-body">
+                    <h5>Số lượng người dùng</h5>
+                    <p class="fs-4">{{ total_users }}</p>
+                    <p>Đã dự đoán: {{ predicted_users }} ({{ predict_rate }}%)</p>
+                </div>
+            </div>
+
+            <!-- Card 2: Thống kê course, comment, problem -->
+            <div class="card shadow-sm border-0 flex-grow-1">
+                <div class="card-body">
+                    <h5>Khóa học & Hoạt động</h5>
+                    <p>Số khóa học: {{ total_courses }}</p>
+                    <p>Số bình luận: {{ total_comments }}</p>
+                    <p>Số bài tập: {{ total_problems }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột phải: Biểu đồ -->
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h5>Phân bố nhãn prediction</h5>
+                    <canvas id="labelChart" style="max-width: 100%; max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const labelCtx = document.getElementById('labelChart').getContext('2d');
+    const colorMap = {
+        "0": '#77DD77',
+        "1": '#FFCE56',
+        "2": '#FF6384'
+    };
+    const backgroundColors = {{ labels | tojson }}.map(label => colorMap[label] || '#B0B0B0');
+
+    new Chart(labelCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ labels | tojson }},
+            datasets: [{
+                label: 'Số lượng',
+                data: {{ label_counts | tojson }},
+                backgroundColor: backgroundColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Model</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message|safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Upload CSV -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Upload CSV File</h5>
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_csv') }}">
+                <div class="input-group">
+                    <input type="file" class="form-control" name="csv_file" accept=".csv" required>
+                    <button class="btn btn-success" type="submit">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Model Actions -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Actions</h5>
+            <div class="d-flex flex-column gap-2">
+                <form method="GET" action="{{ url_for('model.prediction') }}">
+                    <button type="submit" class="btn btn-warning w-100">Run Prediction</button>
+                </form>
+                <form method="GET" action="{{ url_for('model.evaluate') }}">
+                    <button type="submit" class="btn btn-primary w-100">Evaluate Model</button>
+                </form>
+                <form method="GET" action="{{ url_for('model.retrain') }}">
+                    <button type="submit" class="btn btn-danger w-100">Retrain Model</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if acc is defined and f1 is defined %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Evaluation Result</h5>
+            <p><strong>Accuracy:</strong> {{ acc|round(4) }}</p>
+            <p><strong>F1 Score (macro):</strong> {{ f1|round(4) }}</p>
+            <p><strong>Features Used:</strong> {{ features_used|join(', ') }}</p>
+            <div class="table-responsive">
+                {{ report_html|safe }}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
