@@ -1,8 +1,8 @@
 # BI
-Mục lục:
-I. [Requirement](https://github.com/enyx24/cs313-bi/edit/master/README.md#requirement)
-II. [Installation](https://github.com/enyx24/cs313-bi/edit/master/README.md#installation)
-III. [Features](https://github.com/enyx24/cs313-bi/edit/master/README.md#features)
+Mục lục:<br>
+1. [Requirement](https://github.com/enyx24/cs313-bi/edit/master/README.md#requirement)<br>
+2. [Installation](https://github.com/enyx24/cs313-bi/edit/master/README.md#installation)<br>
+3. [Features](https://github.com/enyx24/cs313-bi/edit/master/README.md#features)<br>
 
 ## Requirement
 - python >= 3.12
