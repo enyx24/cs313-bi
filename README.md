@@ -8,6 +8,7 @@ Mục lục:<br>
 - python >= 3.12
 - Dependencies: requirements.txt
 - xampp MySQL hoặc SQL Database khác
+- Scripts tiền xử lí data: [enyx24/cs313_data_scripts](https://github.com/enyx24/cs313_data_scripts)
 ## Installation
 - Cài đặt các dependency: `pip install -r requirements.txt`
 - Download và import database bằng file `bi.sql` từ [Google Drive](https://drive.google.com/drive/u/2/folders/19lSobnFv2e2DfnhcJtLDuqOdnlaf-ICO?fbclid=IwY2xjawKpVpZleHRuA2FlbQIxMQABHpWDA2qaLinnzGvROhjF0ZiaR0WiCd1uLRZgNw0hej4SN8g9OcvIDPK5R6RT_aem_wWBNdhpHmLbNhoayv2o4pg)
